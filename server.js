@@ -6,44 +6,105 @@ const path = require("path");
 const sqlite3 = require("sqlite3").verbose();
 
 
+
 const app = express();
 
 app.use(cors());
 
 
-const publicPath = path.join(__dirname,"public");
 
-app.use(express.static(publicPath));
+const publicPath =
+path.join(__dirname,"public");
+
+
+app.use(
+    express.static(publicPath)
+);
+
 
 
 app.get("/",(req,res)=>{
+
     res.sendFile(
-        path.join(publicPath,"index.html")
+        path.join(
+            publicPath,
+            "index.html"
+        )
     );
+
 });
 
 
 
-const server = http.createServer(app);
 
 
-const io = new Server(server,{
+const server =
+http.createServer(app);
+
+
+
+const io =
+new Server(server,{
+
     cors:{
         origin:"*"
     }
+
 });
 
 
 
 
-// база сообщений
 
-const db = new sqlite3.Database("chat.db");
+// ===== БАЗА =====
+
+
+const db =
+new sqlite3.Database(
+"messenger.db"
+);
+
+
+
+
+db.serialize(()=>{
+
+
+db.run(`
+CREATE TABLE IF NOT EXISTS users(
+id INTEGER PRIMARY KEY AUTOINCREMENT,
+name TEXT UNIQUE
+)
+`);
+
+
+
+
+db.run(`
+CREATE TABLE IF NOT EXISTS servers(
+id INTEGER PRIMARY KEY AUTOINCREMENT,
+name TEXT
+)
+`);
+
+
+
+
+db.run(`
+CREATE TABLE IF NOT EXISTS rooms(
+id INTEGER PRIMARY KEY AUTOINCREMENT,
+server_id INTEGER,
+name TEXT
+)
+`);
+
+
 
 
 db.run(`
 CREATE TABLE IF NOT EXISTS messages(
 id INTEGER PRIMARY KEY AUTOINCREMENT,
+room_id INTEGER,
 user TEXT,
 text TEXT,
 time TEXT
@@ -53,7 +114,29 @@ time TEXT
 
 
 
-let users = {};
+db.run(`
+CREATE TABLE IF NOT EXISTS private_messages(
+id INTEGER PRIMARY KEY AUTOINCREMENT,
+sender TEXT,
+receiver TEXT,
+text TEXT,
+time TEXT
+)
+`);
+
+
+
+});
+
+
+
+
+
+
+
+let online = {};
+
+
 
 
 
@@ -62,90 +145,277 @@ let users = {};
 io.on("connection",(socket)=>{
 
 
-console.log("connect",socket.id);
 
-
-
-
-
-// вход
-
-socket.on("join",(name)=>{
-
-
-users[socket.id]=name;
-
-
-io.emit(
-"onlineUsers",
-Object.values(users)
+console.log(
+"User connected",
+socket.id
 );
 
 
 
-db.all(
-`
-SELECT *
-FROM messages
-ORDER BY id DESC
-LIMIT 50
-`,
-[],
-(err,rows)=>{
-
-if(!err){
-
-socket.emit(
-"history",
-rows.reverse()
-);
-
-}
-
-});
 
 
-});
+// ===== ВХОД =====
 
 
+socket.on(
+"login",
+(name)=>{
 
 
-
-
-// сообщения
-
-socket.on("sendMessage",(text)=>{
-
-
-let user =
-users[socket.id] || "User";
-
-
-let time =
-new Date().toLocaleTimeString();
+online[socket.id]=name;
 
 
 
 db.run(
 `
-INSERT INTO messages(user,text,time)
-VALUES(?,?,?)
+INSERT OR IGNORE INTO users(name)
+VALUES(?)
+`,
+[name]
+);
+
+
+
+socket.emit(
+"login-success",
+name
+);
+
+
+
+io.emit(
+"users",
+Object.values(online)
+);
+
+
+
+});
+
+
+
+
+
+
+
+
+
+// ===== СЕРВЕРЫ =====
+
+
+
+socket.on(
+"create-server",
+(name)=>{
+
+
+db.run(
+`
+INSERT INTO servers(name)
+VALUES(?)
+`,
+[name]
+);
+
+
+
+loadServers(socket);
+
+
+});
+
+
+
+
+
+
+
+socket.on(
+"get-servers",
+()=>{
+
+
+loadServers(socket);
+
+
+});
+
+
+
+
+
+
+function loadServers(socket){
+
+
+db.all(
+`
+SELECT *
+FROM servers
+`,
+[],
+(err,rows)=>{
+
+
+socket.emit(
+"servers",
+rows
+);
+
+
+});
+
+
+}
+
+
+
+
+
+
+
+
+// ===== КОМНАТЫ =====
+
+
+
+socket.on(
+"create-room",
+(data)=>{
+
+
+db.run(
+`
+INSERT INTO rooms(server_id,name)
+VALUES(?,?)
 `,
 [
+data.server,
+data.name
+]
+);
+
+
+
+loadRooms(
+socket,
+data.server
+);
+
+
+});
+
+
+
+
+
+
+
+
+socket.on(
+"get-rooms",
+(server)=>{
+
+
+loadRooms(
+socket,
+server
+);
+
+
+});
+
+
+
+
+
+
+function loadRooms(socket,server){
+
+
+db.all(
+`
+SELECT *
+FROM rooms
+WHERE server_id=?
+`,
+[
+server
+],
+(err,rows)=>{
+
+
+socket.emit(
+"rooms",
+rows
+);
+
+
+});
+
+
+}
+
+
+
+
+
+
+
+
+
+// ===== СООБЩЕНИЯ КОМНАТ =====
+
+
+
+
+socket.on(
+"room-message",
+(data)=>{
+
+
+let user =
+online[socket.id] || "User";
+
+
+let time =
+new Date()
+.toLocaleTimeString();
+
+
+
+
+db.run(
+`
+INSERT INTO messages
+(room_id,user,text,time)
+
+VALUES(?,?,?,?)
+`,
+[
+data.room,
 user,
-text,
+data.text,
 time
 ]
 );
 
 
 
+
 io.emit(
-"message",
+"room-message",
 {
+
+room:data.room,
+
 user:user,
-text:text,
+
+text:data.text,
+
 time:time
+
 }
 );
 
@@ -159,94 +429,102 @@ time:time
 
 
 
-// =================
-// VOICE CHAT
-// =================
+
+
+// ===== ЛИЧНЫЕ СООБЩЕНИЯ =====
 
 
 
-socket.on("voice-join",()=>{
+
+socket.on(
+"private-message",
+(data)=>{
 
 
-socket.broadcast.emit(
-"voice-user",
-socket.id
+let time =
+new Date()
+.toLocaleTimeString();
+
+
+
+db.run(
+`
+INSERT INTO private_messages
+
+(sender,receiver,text,time)
+
+VALUES(?,?,?,?)
+`,
+[
+data.from,
+data.to,
+data.text,
+time
+]
 );
 
 
-});
 
-
-
-
-
-socket.on("voice-offer",(data)=>{
-
-
-io.to(data.target).emit(
-"voice-offer",
-{
-from:socket.id,
-offer:data.offer
-}
-);
-
-
-});
-
-
-
-
-
-socket.on("voice-answer",(data)=>{
-
-
-io.to(data.target).emit(
-"voice-answer",
-{
-from:socket.id,
-answer:data.answer
-}
-);
-
-
-});
-
-
-
-
-
-socket.on("ice-candidate",(data)=>{
-
-
-io.to(data.target).emit(
-"ice-candidate",
-{
-from:socket.id,
-candidate:data.candidate
-}
-);
-
-
-});
-
-
-
-
-
-
-
-
-
-socket.on("disconnect",()=>{
-
-
-delete users[socket.id];
 
 
 io.emit(
-"onlineUsers",
-Object.values(users)
+"private-message",
+{
+
+from:data.from,
+
+to:data.to,
+
+text:data.text,
+
+time:time
+
+}
+);
+
+
+
+});
+
+
+
+
+
+
+
+
+
+socket.on(
+"get-private",
+(data)=>{
+
+
+db.all(
+`
+SELECT *
+FROM private_messages
+
+WHERE
+(sender=? AND receiver=?)
+
+OR
+
+(sender=? AND receiver=?)
+
+`,
+[
+data.from,
+data.to,
+data.to,
+data.from
+],
+
+(err,rows)=>{
+
+
+socket.emit(
+"private-history",
+rows
 );
 
 
@@ -254,6 +532,40 @@ Object.values(users)
 
 
 });
+
+
+
+
+
+
+
+
+
+// ===== ОТКЛЮЧЕНИЕ =====
+
+
+
+socket.on(
+"disconnect",
+()=>{
+
+
+delete online[socket.id];
+
+
+
+io.emit(
+"users",
+Object.values(online)
+);
+
+
+
+});
+
+
+});
+
 
 
 
@@ -265,10 +577,13 @@ const PORT =
 process.env.PORT || 3000;
 
 
-server.listen(PORT,()=>{
+
+server.listen(
+PORT,
+()=>{
 
 console.log(
-"Server started",
+"Server running on",
 PORT
 );
 
