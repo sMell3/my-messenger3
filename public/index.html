@@ -7,96 +7,180 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Messenger</title>
+<title>Messenger Voice</title>
+
 
 <link rel="stylesheet" href="style.css">
 
+
 <script src="/socket.io/socket.io.js"></script>
 
+
 </head>
+
 
 
 <body>
 
 
-<div class="container">
-
-
-    <div class="header">
-
-        💬 Messenger
-
-    </div>
+<div class="app">
 
 
 
-    <div id="login">
+<div class="header">
 
-        <input 
-        id="nickname"
-        placeholder="Введите ник">
+💬 Messenger + Voice
 
-        <button onclick="join()">
-            Войти
-        </button>
-
-    </div>
+</div>
 
 
 
 
-    <div id="chat" style="display:none;">
+
+<div id="login">
 
 
-        <div class="main">
+<h2>
+Вход
+</h2>
 
 
-            <div class="messages" id="messages">
-
-            </div>
-
-
-
-            <div class="users">
-
-                <h3>
-                    Онлайн
-                </h3>
+<input 
+id="nickname"
+placeholder="Ваш ник">
 
 
-                <div id="online">
+<button onclick="join()">
 
-                </div>
+Войти
 
-
-            </div>
-
-
-        </div>
-
-
-
-        <div class="send">
-
-
-            <input 
-            id="message"
-            placeholder="Сообщение">
-
-
-            <button onclick="sendMessage()">
-                ➤
-            </button>
-
-
-        </div>
-
-
-
-    </div>
+</button>
 
 
 </div>
+
+
+
+
+
+
+
+<div id="chat" style="display:none;">
+
+
+
+
+
+<div class="content">
+
+
+
+
+
+<div class="chat-box">
+
+
+
+<div id="messages"
+class="messages">
+
+</div>
+
+
+
+
+<div class="send">
+
+
+<input 
+id="message"
+placeholder="Написать сообщение">
+
+
+<button onclick="sendMessage()">
+
+➤
+
+</button>
+
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+
+
+<div class="side">
+
+
+
+<h3>
+Онлайн
+</h3>
+
+
+<div id="online">
+
+</div>
+
+
+
+<hr>
+
+
+<h3>
+Голос
+</h3>
+
+
+
+<button onclick="startVoice()">
+
+🎤 Включить микрофон
+
+</button>
+
+
+
+<button onclick="muteVoice()">
+
+🔇 Выключить
+
+</button>
+
+
+
+<div id="voiceUsers">
+
+</div>
+
+
+
+
+</div>
+
+
+
+
+
+</div>
+
+
+
+
+</div>
+
+
+
+</div>
+
+
 
 
 
