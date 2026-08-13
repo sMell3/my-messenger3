@@ -7,28 +7,23 @@ let localStream = null;
 
 let peers = {};
 
-let muted = false;
 
 
 
-
-
-// вход
+// =================
+// ВХОД
+// =================
 
 
 function join(){
 
 
-    let input =
-    document.getElementById("nickname");
-
-
     nickname =
-    input.value.trim();
+    document.getElementById("nickname").value.trim();
 
 
 
-    if(nickname === ""){
+    if(!nickname){
 
         alert("Введите ник");
 
@@ -63,7 +58,12 @@ function join(){
 
 
 
-// отправка сообщений
+
+
+// =================
+// ЧАТ
+// =================
+
 
 
 function sendMessage(){
@@ -78,7 +78,8 @@ function sendMessage(){
 
 
 
-    if(text==="") return;
+    if(!text)
+        return;
 
 
 
@@ -107,11 +108,11 @@ document
 (e)=>{
 
 
-    if(e.key==="Enter"){
+if(e.key==="Enter"){
 
-        sendMessage();
+sendMessage();
 
-    }
+}
 
 
 });
@@ -121,10 +122,6 @@ document
 
 
 
-
-
-
-// сообщения
 
 
 socket.on(
@@ -132,12 +129,12 @@ socket.on(
 (data)=>{
 
 
-    addMessage(
-        data
-    );
+addMessage(data);
 
 
 });
+
+
 
 
 
@@ -145,42 +142,44 @@ socket.on(
 function addMessage(data){
 
 
-    let box =
-    document.getElementById(
-        "messages"
-    );
-
-
-    let div =
-    document.createElement(
-        "div"
-    );
-
-
-    div.className="message";
+let box =
+document.getElementById(
+"messages"
+);
 
 
 
-    div.innerHTML=`
-
-    <b>${data.user}</b><br>
-
-    ${data.text}
-
-    <small>
-    ${data.time || ""}
-    </small>
-
-    `;
+let div =
+document.createElement(
+"div"
+);
 
 
 
-    box.appendChild(div);
+div.className="message";
 
 
 
-    box.scrollTop =
-    box.scrollHeight;
+div.innerHTML=`
+
+<b>${data.user}</b><br>
+
+${data.text}
+
+<small>
+${data.time || ""}
+</small>
+
+`;
+
+
+
+box.appendChild(div);
+
+
+
+box.scrollTop =
+box.scrollHeight;
 
 
 }
@@ -193,21 +192,19 @@ function addMessage(data){
 
 
 
-// история сообщений
-
-
 socket.on(
 "history",
-(messages)=>{
+(list)=>{
 
 
-    messages.forEach(
-        msg=>{
+list.forEach(
+msg=>{
 
-            addMessage(msg);
+addMessage(msg);
 
-        }
-    );
+}
+
+);
 
 
 });
@@ -219,45 +216,42 @@ socket.on(
 
 
 
-
-// онлайн пользователи
 
 
 socket.on(
 "onlineUsers",
-(users)=>{
+(list)=>{
 
 
-    let box =
-    document.getElementById(
-        "online"
-    );
-
-
-    box.innerHTML="";
+let box =
+document.getElementById(
+"online"
+);
 
 
 
-    users.forEach(
-        user=>{
-
-
-            let p =
-            document.createElement(
-                "p"
-            );
-
-
-            p.innerHTML =
-            "🟢 " + user;
+box.innerHTML="";
 
 
 
-            box.appendChild(p);
+list.forEach(
+user=>{
 
 
-        }
-    );
+let p =
+document.createElement(
+"p"
+);
+
+
+p.innerHTML =
+"🟢 "+user;
+
+
+box.appendChild(p);
+
+
+});
 
 
 });
@@ -270,9 +264,9 @@ socket.on(
 
 
 
-// ======================
-//      VOICE CHAT
-// ======================
+// =================
+// ГОЛОСОВОЙ ЧАТ
+// =================
 
 
 
@@ -280,93 +274,54 @@ socket.on(
 async function startVoice(){
 
 
-    if(localStream){
 
-        return;
+if(localStream){
 
-    }
-
-
-
-    try{
-
-
-        localStream =
-        await navigator
-        .mediaDevices
-        .getUserMedia({
-
-            audio:true
-
-        });
-
-
-
-        alert(
-            "🎤 Микрофон включён"
-        );
-
-
-
-        socket.emit(
-            "voice-ready"
-        );
-
-
-
-    }
-
-    catch(error){
-
-
-        alert(
-            "Нет доступа к микрофону"
-        );
-
-
-        console.log(error);
-
-
-    }
-
+return;
 
 }
 
 
 
+try{
+
+
+localStream =
+await navigator.mediaDevices
+.getUserMedia({
+
+audio:true
+
+});
 
 
 
-
-
-function muteVoice(){
-
-
-    if(!localStream){
-
-        return;
-
-    }
+socket.emit(
+"voice-join"
+);
 
 
 
-    muted =
-    !muted;
+alert(
+"🎤 Микрофон включён"
+);
 
 
 
-    localStream
-    .getAudioTracks()
-    .forEach(
-        track=>{
+}
+
+catch(e){
 
 
-            track.enabled =
-            !muted;
+alert(
+"Нет доступа к микрофону"
+);
 
 
-        }
-    );
+console.log(e);
+
+
+}
 
 
 
@@ -380,7 +335,167 @@ function muteVoice(){
 
 
 
-// получение предложения WebRTC
+function createPeer(id){
+
+
+let peer =
+new RTCPeerConnection({
+
+iceServers:[
+
+{
+
+urls:
+"stun:stun.l.google.com:19302"
+
+}
+
+]
+
+});
+
+
+
+peers[id]=peer;
+
+
+
+
+
+
+if(localStream){
+
+
+localStream
+.getTracks()
+.forEach(
+track=>{
+
+
+peer.addTrack(
+track,
+localStream
+);
+
+
+});
+
+}
+
+
+
+peer.onicecandidate =
+(e)=>{
+
+
+if(e.candidate){
+
+
+socket.emit(
+"ice-candidate",
+{
+
+target:id,
+
+candidate:e.candidate
+
+}
+
+);
+
+
+}
+
+
+};
+
+
+
+
+
+
+peer.ontrack =
+(e)=>{
+
+
+let audio =
+document.createElement(
+"audio"
+);
+
+
+audio.autoplay=true;
+
+
+audio.srcObject =
+e.streams[0];
+
+
+document.body.appendChild(
+audio
+);
+
+
+};
+
+
+
+return peer;
+
+
+}
+
+
+
+
+
+
+
+
+
+socket.on(
+"voice-user",
+async(id)=>{
+
+
+let peer =
+createPeer(id);
+
+
+
+let offer =
+await peer.createOffer();
+
+
+
+await peer.setLocalDescription(
+offer
+);
+
+
+
+socket.emit(
+"voice-offer",
+{
+
+target:id,
+
+offer:offer
+
+}
+
+);
+
+
+
+});
+
+
+
+
+
+
+
 
 
 socket.on(
@@ -388,40 +503,42 @@ socket.on(
 async(data)=>{
 
 
-    let peer =
-    createPeer(
-        data.id
-    );
+let peer =
+createPeer(
+data.from
+);
 
 
 
-    await peer.setRemoteDescription(
-        data.offer
-    );
+await peer.setRemoteDescription(
+data.offer
+);
 
 
 
-    let answer =
-    await peer.createAnswer();
+let answer =
+await peer.createAnswer();
 
 
 
-    await peer.setLocalDescription(
-        answer
-    );
+await peer.setLocalDescription(
+answer
+);
 
 
 
-    socket.emit(
-        "voice-answer",
-        {
+socket.emit(
+"voice-answer",
+{
 
-            id:data.id,
+target:data.from,
 
-            answer:answer
+answer:answer
 
-        }
-    );
+}
+
+);
+
 
 
 });
@@ -439,19 +556,20 @@ socket.on(
 async(data)=>{
 
 
-    let peer =
-    peers[data.id];
+let peer =
+peers[data.from];
 
 
-    if(peer){
+
+if(peer){
 
 
-        await peer.setRemoteDescription(
-            data.answer
-        );
+await peer.setRemoteDescription(
+data.answer
+);
 
 
-    }
+}
 
 
 });
@@ -469,20 +587,20 @@ socket.on(
 async(data)=>{
 
 
-    let peer =
-    peers[data.id];
+let peer =
+peers[data.from];
 
 
 
-    if(peer){
+if(peer){
 
 
-        await peer.addIceCandidate(
-            data.candidate
-        );
+await peer.addIceCandidate(
+data.candidate
+);
 
 
-    }
+}
 
 
 });
@@ -494,108 +612,25 @@ async(data)=>{
 
 
 
-
-function createPeer(id){
-
-
-    let peer =
-    new RTCPeerConnection();
+function muteVoice(){
 
 
-
-    peers[id]=peer;
+if(!localStream)
+return;
 
 
 
+localStream
+.getAudioTracks()
+.forEach(
+track=>{
 
 
-    if(localStream){
+track.enabled =
+!track.enabled;
 
 
-        localStream
-        .getTracks()
-        .forEach(
-            track=>{
-
-
-                peer.addTrack(
-                    track,
-                    localStream
-                );
-
-
-            }
-        );
-
-
-    }
-
-
-
-
-
-
-    peer.onicecandidate =
-    (event)=>{
-
-
-        if(event.candidate){
-
-
-            socket.emit(
-                "ice-candidate",
-                {
-
-                    id:id,
-
-                    candidate:
-                    event.candidate
-
-                }
-            );
-
-
-        }
-
-
-    };
-
-
-
-
-
-    peer.ontrack =
-    (event)=>{
-
-
-        let audio =
-        document.createElement(
-            "audio"
-        );
-
-
-        audio.autoplay=true;
-
-
-        audio.srcObject =
-        event.streams[0];
-
-
-
-        document
-        .getElementById(
-            "voiceUsers"
-        )
-        .appendChild(
-            audio
-        );
-
-
-    };
-
-
-
-    return peer;
+});
 
 
 }
