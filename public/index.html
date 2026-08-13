@@ -7,7 +7,8 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Messenger Voice</title>
+
+<title>Messenger</title>
 
 
 <link rel="stylesheet" href="style.css">
@@ -22,7 +23,10 @@
 <body>
 
 
+
 <div class="app">
+
+
 
 
 
@@ -35,11 +39,22 @@
 
 
 <button onclick="createServer()">
-➕
+➕ Создать
 </button>
 
 
-<div id="servers"></div>
+
+<button onclick="searchServers()">
+🔍 Найти
+</button>
+
+
+
+
+<div id="servers">
+
+</div>
+
 
 
 </div>
@@ -50,36 +65,44 @@
 
 
 
+
+
 <!-- КОМНАТЫ -->
+
 
 <div class="rooms">
 
 
-<h3>Комнаты</h3>
+<h3>
+Комнаты
+</h3>
 
 
-<button onclick="createTextRoom()">
-💬
+<button onclick="createRoom()">
+➕
 </button>
 
 
-<button onclick="createVoiceRoom()">
-🔊
-</button>
+
+<div id="rooms">
+
+</div>
 
 
-
-<div id="rooms"></div>
 
 
 
 <hr>
 
 
+<h3>
+Онлайн
+</h3>
 
-<h3>Онлайн</h3>
 
-<div id="users"></div>
+<div id="users">
+
+</div>
 
 
 
@@ -95,13 +118,14 @@
 
 <!-- ЧАТ -->
 
+
 <div class="chat">
 
 
 
 <div class="chat-header">
 
-Messenger
+💬 Messenger
 
 </div>
 
@@ -109,8 +133,8 @@ Messenger
 
 
 
-<div id="messages"
-class="messages">
+<div id="messages" class="messages">
+
 
 </div>
 
@@ -122,10 +146,11 @@ class="messages">
 <div class="send">
 
 
-<input 
+<input
 id="message"
-placeholder="Сообщение..."
+placeholder="Введите сообщение..."
 >
+
 
 
 <button onclick="sendMessage()">
@@ -145,70 +170,54 @@ placeholder="Сообщение..."
 
 
 
+</div>
 
 
 
 
-<!-- ГОЛОС -->
-
-<div class="voice">
-
-
-<h3>
-🔊 Голос
-</h3>
 
 
 
-<div id="voiceRoom">
 
-Нет комнаты
+
+<!-- ОКНО ПОИСКА СЕРВЕРОВ -->
+
+
+<div id="serverWindow" class="server-window">
+
+
+
+<div class="server-box">
+
+
+
+<h2>
+
+🔍 Все серверы
+
+</h2>
+
+
+
+
+<div id="allServers">
 
 </div>
 
 
 
-<button onclick="joinVoice()">
 
-🎤 Войти
+
+<button onclick="closeServers()">
+
+Закрыть
 
 </button>
 
 
 
 
-<button onclick="leaveVoice()">
-
-❌ Выйти
-
-</button>
-
-
-
-
-<button onclick="muteMic()">
-
-🔇 Микрофон
-
-</button>
-
-
-
-<h4>
-Игроки:
-</h4>
-
-
-<div id="voiceUsers">
-
 </div>
-
-
-
-</div>
-
-
-
 
 
 
