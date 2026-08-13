@@ -3,14 +3,13 @@
 }
 
 
-
 body{
 
     margin:0;
 
     height:100vh;
 
-    background:#0b1120;
+    background:#0f172a;
 
     color:white;
 
@@ -21,17 +20,13 @@ body{
 
 
 
-
 .app{
 
     display:flex;
 
     height:100vh;
 
-    width:100%;
-
 }
-
 
 
 
@@ -69,24 +64,22 @@ button:hover{
 
 
 
+/* СЕРВЕРА */
 
-/* Сервера */
 
 .servers{
 
     width:90px;
 
-    background:#111827;
+    background:#020617;
 
     padding:10px;
 
     text-align:center;
 
-    overflow-y:auto;
+    overflow:auto;
 
 }
-
-
 
 
 
@@ -100,17 +93,18 @@ button:hover{
 
 
 
-/* Комнаты */
+/* КОМНАТЫ */
+
 
 .rooms{
 
     width:250px;
 
-    background:#1e293b;
+    background:#111827;
 
     padding:15px;
 
-    overflow-y:auto;
+    overflow:auto;
 
 }
 
@@ -130,7 +124,9 @@ button:hover{
 
 
 
-/* Чат */
+
+/* ЧАТ */
+
 
 .chat{
 
@@ -150,7 +146,7 @@ button:hover{
 
     height:60px;
 
-    background:#334155;
+    background:#1e293b;
 
     display:flex;
 
@@ -168,18 +164,18 @@ button:hover{
 
 
 
+
 .messages{
 
     flex:1;
 
     padding:20px;
 
-    overflow-y:auto;
+    overflow:auto;
 
     background:#020617;
 
 }
-
 
 
 
@@ -191,11 +187,13 @@ button:hover{
 
     padding:12px;
 
+    border-radius:10px;
+
     margin-bottom:10px;
 
-    border-radius:12px;
-
 }
+
+
 
 
 
@@ -207,15 +205,15 @@ button:hover{
 
 
 
-.message small{
 
-    display:block;
+
+.message small{
 
     opacity:.6;
 
-    margin-top:5px;
-
 }
+
+
 
 
 
@@ -226,13 +224,11 @@ button:hover{
 
     display:flex;
 
-    padding:10px;
-
     background:#111827;
 
+    padding:10px;
+
 }
-
-
 
 
 
@@ -242,25 +238,57 @@ button:hover{
 
     flex:1;
 
-    padding:15px;
-
-    border-radius:10px;
-
-    border:none;
-
     background:#020617;
 
     color:white;
 
-    font-size:16px;
+    border:none;
+
+    border-radius:10px;
+
+    padding:15px;
 
 }
 
 
 
-.send button{
 
-    width:60px;
+
+
+
+
+/* ГОЛОС */
+
+
+.voice{
+
+    width:250px;
+
+    background:#1e293b;
+
+    padding:15px;
+
+}
+
+
+
+
+.voice button{
+
+    width:100%;
+
+}
+
+
+
+
+#voiceUsers p{
+
+    background:#334155;
+
+    padding:8px;
+
+    border-radius:8px;
 
 }
 
@@ -268,11 +296,22 @@ button:hover{
 
 
 
-h3{
 
-    margin-top:5px;
 
-    color:#cbd5e1;
+#users p{
+
+    margin:5px;
+
+}
+
+
+
+
+
+
+hr{
+
+    border-color:#475569;
 
 }
 
@@ -283,7 +322,7 @@ h3{
 
 ::-webkit-scrollbar{
 
-    width:6px;
+    width:7px;
 
 }
 
