@@ -1,14 +1,17 @@
 {
-  "name": "messenger-server",
-  "version": "1.0.0",
-  "description": "Simple web messenger",
+  "name": "browser-messenger",
+  "version": "2.0.0",
+  "description": "Messenger with voice chat",
   "main": "server.js",
+
   "scripts": {
     "start": "node server.js"
   },
+
   "dependencies": {
     "express": "^5.1.0",
     "socket.io": "^4.8.1",
-    "cors": "^2.8.5"
+    "cors": "^2.8.5",
+    "sqlite3": "^5.1.7"
   }
 }
