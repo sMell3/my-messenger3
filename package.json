@@ -1,7 +1,7 @@
 {
-  "name": "browser-messenger",
-  "version": "2.0.0",
-  "description": "Messenger with voice chat",
+  "name": "messenger-v4",
+  "version": "1.0.0",
+  "description": "Discord style messenger",
   "main": "server.js",
 
   "scripts": {
