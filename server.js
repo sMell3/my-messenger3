@@ -3,6 +3,8 @@ const http = require("http");
 const { Server } = require("socket.io");
 const cors = require("cors");
 const path = require("path");
+const sqlite3 = require("sqlite3").verbose();
+
 
 
 const app = express();
@@ -10,22 +12,32 @@ const app = express();
 app.use(cors());
 
 
-// папка с сайтом
-const publicPath = path.join(__dirname, "public");
+// папка сайта
 
-app.use(express.static(publicPath));
+const publicPath = path.join(
+    __dirname,
+    "public"
+);
+
+
+app.use(
+    express.static(publicPath)
+);
 
 
 
-// главная страница
-
-app.get("/", (req, res) => {
+app.get("/", (req,res)=>{
 
     res.sendFile(
-        path.join(publicPath, "index.html")
+        path.join(
+            publicPath,
+            "index.html"
+        )
     );
 
 });
+
+
 
 
 
@@ -33,32 +45,65 @@ const server = http.createServer(app);
 
 
 
-const io = new Server(server, {
+const io = new Server(server,{
 
-    cors: {
-        origin: "*"
+    cors:{
+        origin:"*"
     }
 
 });
 
 
 
-// пользователи онлайн
+
+
+// база сообщений
+
+const db = new sqlite3.Database(
+    "chat.db"
+);
+
+
+
+db.run(`
+
+CREATE TABLE IF NOT EXISTS messages (
+
+id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+user TEXT,
+
+text TEXT,
+
+time TEXT
+
+)
+
+`);
+
+
+
+
 
 let users = {};
 
 
 
-// подключение
 
-io.on("connection", (socket)=>{
+
+io.on("connection",(socket)=>{
 
 
     console.log(
-        "Новое подключение:",
+        "Подключение:",
         socket.id
     );
 
+
+
+
+
+    // вход
 
 
     socket.on("join",(nickname)=>{
@@ -75,26 +120,104 @@ io.on("connection", (socket)=>{
 
 
 
+        socket.emit(
+            "history",
+            []
+        );
+
+
+
+        db.all(
+
+            `
+            SELECT *
+            FROM messages
+            ORDER BY id DESC
+            LIMIT 50
+            `,
+
+            [],
+
+            (err,rows)=>{
+
+
+                if(!err){
+
+                    socket.emit(
+                        "history",
+                        rows.reverse()
+                    );
+
+                }
+
+            }
+
+        );
+
+
+
         io.emit(
             "message",
             {
+
                 user:"SERVER",
-                text:`${nickname} вошёл в чат`,
-                time:new Date().toLocaleTimeString()
+
+                text:
+                `${nickname} вошёл`,
+
+                time:
+                new Date()
+                .toLocaleTimeString()
+
             }
         );
 
 
     });
 
+
+
+
+
+
+    // сообщения
 
 
 
     socket.on("sendMessage",(text)=>{
 
 
-        const nickname =
+        let user =
         users[socket.id] || "Unknown";
+
+
+
+        let time =
+        new Date()
+        .toLocaleTimeString();
+
+
+
+
+        db.run(
+
+            `
+            INSERT INTO messages
+            (user,text,time)
+
+            VALUES (?,?,?)
+
+            `,
+
+            [
+                user,
+                text,
+                time
+            ]
+
+        );
+
+
 
 
 
@@ -102,14 +225,16 @@ io.on("connection", (socket)=>{
             "message",
             {
 
-                user:nickname,
+                user:user,
 
                 text:text,
 
-                time:new Date().toLocaleTimeString()
+                time:time
 
             }
+
         );
+
 
 
     });
@@ -118,39 +243,142 @@ io.on("connection", (socket)=>{
 
 
 
-    socket.on("disconnect",()=>{
-
-
-        const nickname =
-        users[socket.id];
-
-
-        delete users[socket.id];
 
 
 
-        io.emit(
-            "onlineUsers",
-            Object.values(users)
-        );
+    // ===== VOICE CHAT WEBRTC =====
 
 
 
-        if(nickname){
+    socket.on(
+        "voice-offer",
+        (data)=>{
 
-            io.emit(
-                "message",
+
+            socket.broadcast.emit(
+                "voice-offer",
                 {
-                    user:"SERVER",
-                    text:`${nickname} вышел`,
-                    time:new Date().toLocaleTimeString()
+
+                    id:socket.id,
+
+                    offer:data
+
                 }
+
             );
+
 
         }
 
+    );
 
-    });
+
+
+
+
+    socket.on(
+        "voice-answer",
+        (data)=>{
+
+
+            socket.broadcast.emit(
+                "voice-answer",
+                data
+
+            );
+
+
+        }
+
+    );
+
+
+
+
+
+
+    socket.on(
+        "ice-candidate",
+        (data)=>{
+
+
+            socket.broadcast.emit(
+                "ice-candidate",
+                {
+
+                    id:socket.id,
+
+                    candidate:data
+
+                }
+
+            );
+
+
+        }
+
+    );
+
+
+
+
+
+
+
+
+    // выход
+
+
+
+    socket.on(
+        "disconnect",
+        ()=>{
+
+
+            let name =
+            users[socket.id];
+
+
+
+            delete users[socket.id];
+
+
+
+            io.emit(
+                "onlineUsers",
+                Object.values(users)
+            );
+
+
+
+            if(name){
+
+
+                io.emit(
+                    "message",
+                    {
+
+                    user:"SERVER",
+
+                    text:
+                    `${name} вышел`,
+
+                    time:
+                    new Date()
+                    .toLocaleTimeString()
+
+                    }
+
+                );
+
+
+            }
+
+
+
+        }
+
+    );
 
 
 
@@ -160,19 +388,22 @@ io.on("connection", (socket)=>{
 
 
 
-// Render использует свой порт
+
 
 const PORT =
 process.env.PORT || 3000;
 
 
 
-server.listen(PORT,()=>{
+server.listen(
+    PORT,
+    ()=>{
 
 
-    console.log(
-        `Server started on ${PORT}`
-    );
+        console.log(
+            `Server started on ${PORT}`
+        );
 
 
-});
+    }
+);
