@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Messenger</title>
+
+<link rel="stylesheet" href="style.css">
+
+<script src="/socket.io/socket.io.js"></script>
+
+</head>
+
+
+<body>
+
+
+<div class="container">
+
+
+    <div class="header">
+
+        💬 Messenger
+
+    </div>
+
+
+
+    <div id="login">
+
+        <input 
+        id="nickname"
+        placeholder="Введите ник">
+
+        <button onclick="join()">
+            Войти
+        </button>
+
+    </div>
+
+
+
+
+    <div id="chat" style="display:none;">
+
+
+        <div class="main">
+
+
+            <div class="messages" id="messages">
+
+            </div>
+
+
+
+            <div class="users">
+
+                <h3>
+                    Онлайн
+                </h3>
+
+
+                <div id="online">
+
+                </div>
+
+
+            </div>
+
+
+        </div>
+
+
+
+        <div class="send">
+
+
+            <input 
+            id="message"
+            placeholder="Сообщение">
+
+
+            <button onclick="sendMessage()">
+                ➤
+            </button>
+
+
+        </div>
+
+
+
+    </div>
+
+
+</div>
+
+
+
+<script src="app.js"></script>
+
+
+</body>
+
+</html>
