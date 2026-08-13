@@ -8,7 +8,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 
-<title>Messenger Voice</title>
+<title>Messenger v4</title>
 
 
 <link rel="stylesheet" href="style.css">
@@ -20,43 +20,67 @@
 </head>
 
 
+
 <body>
 
 
 <div class="app">
 
 
-<div class="header">
 
-💬 Messenger + Voice
+<!-- СЕРВЕРА -->
 
-</div>
-
+<div class="servers">
 
 
+<h3>🏠 Серверы</h3>
 
 
-<div id="login">
-
-
-<h2>
-Вход
-</h2>
-
-
-<input 
-id="nickname"
-placeholder="Введите ник"
->
-
-
-<button onclick="join()">
-
-Войти
-
+<button onclick="createServer()">
+➕
 </button>
 
 
+<div id="servers"></div>
+
+
+</div>
+
+
+
+
+
+
+
+
+<!-- КОМНАТЫ -->
+
+<div class="rooms">
+
+
+<h3>Комнаты</h3>
+
+
+<button onclick="createRoom()">
+➕
+</button>
+
+
+<div id="rooms"></div>
+
+
+
+
+<hr>
+
+
+<h3>ЛС</h3>
+
+
+<div id="users"></div>
+
+
+
 </div>
 
 
@@ -66,23 +90,28 @@ placeholder="Введите ник"
 
 
 
-<div id="chat" style="display:none;">
+
+<!-- ЧАТ -->
+
+<div class="chat">
 
 
 
-<div class="content">
+<div class="chat-header">
 
-
-
-
-
-<div class="chat-box">
-
-
-<div id="messages" class="messages">
-
+Messenger
 
 </div>
+
+
+
+
+
+<div id="messages"
+class="messages">
+
+</div>
+
 
 
 
@@ -92,7 +121,7 @@ placeholder="Введите ник"
 
 <input
 id="message"
-placeholder="Сообщение..."
+placeholder="Написать сообщение..."
 >
 
 
@@ -111,73 +140,6 @@ placeholder="Сообщение..."
 
 
 
-
-
-
-
-
-
-<div class="side">
-
-
-<h3>
-👥 Онлайн
-</h3>
-
-
-<div id="online">
-
-</div>
-
-
-
-
-<hr>
-
-
-<h3>
-🎤 Голос
-
-</h3>
-
-
-
-<button onclick="startVoice()">
-
-🎙 Включить микрофон
-
-</button>
-
-
-
-<button onclick="muteVoice()">
-
-🔇 Выключить микрофон
-
-</button>
-
-
-
-<div id="voiceUsers">
-
-</div>
-
-
-
-</div>
-
-
-
-
-
-
-</div>
-
-
-</div>
-
-
-
 </div>
 
 
@@ -189,6 +151,5 @@ placeholder="Сообщение..."
 
 
 </body>
-
 
 </html>
