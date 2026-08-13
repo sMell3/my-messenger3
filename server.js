@@ -6,35 +6,26 @@ const path = require("path");
 const sqlite3 = require("sqlite3").verbose();
 
 
-
 const app = express();
 
 app.use(cors());
-
 
 
 const publicPath =
 path.join(__dirname,"public");
 
 
-app.use(
-    express.static(publicPath)
-);
+app.use(express.static(publicPath));
 
 
 
 app.get("/",(req,res)=>{
 
-    res.sendFile(
-        path.join(
-            publicPath,
-            "index.html"
-        )
-    );
+res.sendFile(
+path.join(publicPath,"index.html")
+);
 
 });
-
-
 
 
 
@@ -45,25 +36,22 @@ http.createServer(app);
 
 const io =
 new Server(server,{
-
-    cors:{
-        origin:"*"
-    }
-
+cors:{
+origin:"*"
+}
 });
 
 
 
 
 
-// ===== БАЗА =====
+// DATABASE
 
 
 const db =
 new sqlite3.Database(
 "messenger.db"
 );
-
 
 
 
@@ -76,7 +64,6 @@ id INTEGER PRIMARY KEY AUTOINCREMENT,
 name TEXT UNIQUE
 )
 `);
-
 
 
 
@@ -94,7 +81,8 @@ db.run(`
 CREATE TABLE IF NOT EXISTS rooms(
 id INTEGER PRIMARY KEY AUTOINCREMENT,
 server_id INTEGER,
-name TEXT
+name TEXT,
+type TEXT
 )
 `);
 
@@ -113,19 +101,6 @@ time TEXT
 
 
 
-
-db.run(`
-CREATE TABLE IF NOT EXISTS private_messages(
-id INTEGER PRIMARY KEY AUTOINCREMENT,
-sender TEXT,
-receiver TEXT,
-text TEXT,
-time TEXT
-)
-`);
-
-
-
 });
 
 
@@ -133,8 +108,9 @@ time TEXT
 
 
 
+let users = {};
 
-let online = {};
+let voiceRooms = {};
 
 
 
@@ -146,16 +122,9 @@ io.on("connection",(socket)=>{
 
 
 
-console.log(
-"User connected",
-socket.id
-);
 
 
-
-
-
-// ===== ВХОД =====
+// LOGIN
 
 
 socket.on(
@@ -163,18 +132,7 @@ socket.on(
 (name)=>{
 
 
-online[socket.id]=name;
-
-
-
-db.run(
-`
-INSERT OR IGNORE INTO users(name)
-VALUES(?)
-`,
-[name]
-);
-
+users[socket.id]=name;
 
 
 socket.emit(
@@ -186,9 +144,8 @@ name
 
 io.emit(
 "users",
-Object.values(online)
+Object.values(users)
 );
-
 
 
 });
@@ -199,9 +156,34 @@ Object.values(online)
 
 
 
+// SERVERS
 
 
-// ===== СЕРВЕРЫ =====
+
+socket.on(
+"get-servers",
+()=>{
+
+
+db.all(
+"SELECT * FROM servers",
+[],
+(err,rows)=>{
+
+
+socket.emit(
+"servers",
+rows
+);
+
+
+});
+
+
+});
+
+
+
 
 
 
@@ -220,54 +202,10 @@ VALUES(?)
 
 
 
-loadServers(socket);
-
-
 });
 
 
-
-
-
-
-
-socket.on(
-"get-servers",
-()=>{
-
-
-loadServers(socket);
-
-
-});
-
-
-
-
-
-
-function loadServers(socket){
-
-
-db.all(
-`
-SELECT *
-FROM servers
-`,
-[],
-(err,rows)=>{
-
-
-socket.emit(
-"servers",
-rows
-);
-
-
-});
-
-
-}
+ 
 
 
 
@@ -276,7 +214,8 @@ rows
 
 
 
-// ===== КОМНАТЫ =====
+
+// ROOMS
 
 
 
@@ -287,26 +226,21 @@ socket.on(
 
 db.run(
 `
-INSERT INTO rooms(server_id,name)
-VALUES(?,?)
+INSERT INTO rooms
+(server_id,name,type)
+
+VALUES(?,?,?)
+
 `,
 [
 data.server,
-data.name
+data.name,
+data.type
 ]
 );
 
 
-
-loadRooms(
-socket,
-data.server
-);
-
-
 });
-
-
 
 
 
@@ -318,31 +252,17 @@ socket.on(
 (server)=>{
 
 
-loadRooms(
-socket,
-server
-);
-
-
-});
-
-
-
-
-
-
-function loadRooms(socket,server){
-
-
 db.all(
 `
 SELECT *
 FROM rooms
 WHERE server_id=?
+
 `,
 [
 server
 ],
+
 (err,rows)=>{
 
 
@@ -355,7 +275,7 @@ rows
 });
 
 
-}
+});
 
 
 
@@ -365,8 +285,7 @@ rows
 
 
 
-// ===== СООБЩЕНИЯ КОМНАТ =====
-
+// TEXT CHAT
 
 
 
@@ -376,31 +295,12 @@ socket.on(
 
 
 let user =
-online[socket.id] || "User";
+users[socket.id] || "User";
 
 
 let time =
 new Date()
 .toLocaleTimeString();
-
-
-
-
-db.run(
-`
-INSERT INTO messages
-(room_id,user,text,time)
-
-VALUES(?,?,?,?)
-`,
-[
-data.room,
-user,
-data.text,
-time
-]
-);
-
 
 
 
@@ -417,6 +317,69 @@ text:data.text,
 time:time
 
 }
+
+);
+
+
+});
+
+
+
+
+
+
+
+
+
+// ======================
+// VOICE ROOMS
+// ======================
+
+
+
+socket.on(
+"join-voice",
+(room)=>{
+
+
+if(!voiceRooms[room]){
+
+voiceRooms[room]=[];
+
+}
+
+
+
+voiceRooms[room].push(
+socket.id
+);
+
+
+
+socket.join(
+"voice-"+room
+);
+
+
+
+
+socket.to(
+"voice-"+room
+)
+.emit(
+"voice-user",
+socket.id
+);
+
+
+
+
+io.to(
+"voice-"+room
+)
+.emit(
+"voice-list",
+voiceRooms[room]
 );
 
 
@@ -431,63 +394,71 @@ time:time
 
 
 
-// ===== ЛИЧНЫЕ СООБЩЕНИЯ =====
-
-
-
-
 socket.on(
-"private-message",
-(data)=>{
+"leave-voice",
+(room)=>{
 
 
-let time =
-new Date()
-.toLocaleTimeString();
+if(voiceRooms[room]){
+
+
+voiceRooms[room] =
+voiceRooms[room]
+.filter(
+id=>id!==socket.id
+);
+
+
+}
 
 
 
-db.run(
-`
-INSERT INTO private_messages
-
-(sender,receiver,text,time)
-
-VALUES(?,?,?,?)
-`,
-[
-data.from,
-data.to,
-data.text,
-time
-]
+socket.leave(
+"voice-"+room
 );
 
 
 
+io.to(
+"voice-"+room
+)
+.emit(
+"voice-list",
+voiceRooms[room] || []
+);
 
 
-io.emit(
-"private-message",
+
+});
+
+
+
+
+
+
+
+
+
+// WEBRTC
+
+
+
+socket.on(
+"offer",
+(data)=>{
+
+
+io.to(data.target)
+.emit(
+"offer",
 {
-
-from:data.from,
-
-to:data.to,
-
-text:data.text,
-
-time:time
-
+from:socket.id,
+offer:data.offer
 }
 );
 
 
-
 });
-
-
-
 
 
 
@@ -495,42 +466,42 @@ time:time
 
 
 socket.on(
-"get-private",
+"answer",
 (data)=>{
 
 
-db.all(
-`
-SELECT *
-FROM private_messages
-
-WHERE
-(sender=? AND receiver=?)
-
-OR
-
-(sender=? AND receiver=?)
-
-`,
-[
-data.from,
-data.to,
-data.to,
-data.from
-],
-
-(err,rows)=>{
-
-
-socket.emit(
-"private-history",
-rows
+io.to(data.target)
+.emit(
+"answer",
+{
+from:socket.id,
+answer:data.answer
+}
 );
 
 
 });
 
 
+
+
+
+
+socket.on(
+"ice",
+(data)=>{
+
+
+io.to(data.target)
+.emit(
+"ice",
+{
+from:socket.id,
+candidate:data.candidate
+}
+);
+
+
 });
 
 
@@ -538,10 +509,6 @@ rows
 
 
 
-
-
-
-// ===== ОТКЛЮЧЕНИЕ =====
 
 
 
@@ -550,13 +517,26 @@ socket.on(
 ()=>{
 
 
-delete online[socket.id];
+delete users[socket.id];
+
+
+for(let room in voiceRooms){
+
+
+voiceRooms[room] =
+voiceRooms[room]
+.filter(
+id=>id!==socket.id
+);
+
+
+}
 
 
 
 io.emit(
 "users",
-Object.values(online)
+Object.values(users)
 );
 
 
@@ -564,9 +544,10 @@ Object.values(online)
 });
 
 
+
+
+
 });
-
-
 
 
 
@@ -583,7 +564,7 @@ PORT,
 ()=>{
 
 console.log(
-"Server running on",
+"SERVER STARTED",
 PORT
 );
 
