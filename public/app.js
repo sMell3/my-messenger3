@@ -4,19 +4,26 @@ const socket = io();
 
 let username = "";
 
-let currentRoom = null;
-
 let currentServer = null;
 
-let privateUser = null;
+let currentRoom = null;
+
+let currentVoiceRoom = null;
+
+
+let localStream = null;
+
+let peers = {};
+
+let muted = false;
 
 
 
 
 
-// ======================
-// ВХОД
-// ======================
+// =================
+// LOGIN
+// =================
 
 
 window.onload = ()=>{
@@ -29,10 +36,14 @@ prompt("Введите ник");
 
 if(username){
 
-
 socket.emit(
 "login",
 username
+);
+
+
+socket.emit(
+"get-servers"
 );
 
 
@@ -50,9 +61,10 @@ username
 
 
 
-// ======================
-// СЕРВЕРЫ
-// ======================
+// =================
+// SERVERS
+// =================
+
 
 
 function createServer(){
@@ -67,25 +79,27 @@ prompt(
 
 if(name){
 
-
 socket.emit(
 "create-server",
 name
 );
 
 
-}
-
-
-}
-
-
-
-
+setTimeout(()=>{
 
 socket.emit(
 "get-servers"
 );
+
+},500);
+
+
+}
+
+
+}
+
+
 
 
 
@@ -100,7 +114,6 @@ let box =
 document.getElementById(
 "servers"
 );
-
 
 
 box.innerHTML="";
@@ -129,7 +142,6 @@ currentServer =
 server.id;
 
 
-
 socket.emit(
 "get-rooms",
 server.id
@@ -148,7 +160,6 @@ box.appendChild(btn);
 });
 
 
-
 });
 
 
@@ -159,20 +170,46 @@ box.appendChild(btn);
 
 
 
-// ======================
-// КОМНАТЫ
-// ======================
+// =================
+// ROOMS
+// =================
 
 
 
-function createRoom(){
+function createTextRoom(){
 
+
+createRoom(
+"text"
+);
+
+
+}
+
+
+
+
+function createVoiceRoom(){
+
+
+createRoom(
+"voice"
+);
+
+
+}
+
+
+
+
+
+function createRoom(type){
 
 
 if(!currentServer){
 
 alert(
-"Выбери сервер"
+"Сначала выбери сервер"
 );
 
 return;
@@ -197,17 +234,35 @@ socket.emit(
 
 server:currentServer,
 
-name:name
+name:name,
+
+type:type
 
 }
 
 );
 
 
+
+setTimeout(()=>{
+
+
+socket.emit(
+"get-rooms",
+currentServer
+);
+
+
+},500);
+
+
+
 }
 
 
+
 }
+
 
 
 
@@ -242,8 +297,39 @@ document.createElement(
 
 
 
+if(room.type==="voice"){
+
+
 btn.innerHTML =
-"# "+room.name;
+"🔊 "+room.name;
+
+
+
+btn.onclick=()=>{
+
+
+currentVoiceRoom =
+room.id;
+
+
+document.getElementById(
+"voiceRoom"
+).innerHTML =
+room.name;
+
+
+
+};
+
+
+
+}
+
+else{
+
+
+btn.innerHTML =
+"💬 "+room.name;
 
 
 
@@ -254,15 +340,13 @@ currentRoom =
 room.id;
 
 
-
-privateUser=null;
-
-
-
-loadRoom();
+currentVoiceRoom=null;
 
 
 };
+
+
+}
 
 
 
@@ -273,6 +357,7 @@ box.appendChild(btn);
 });
 
 
+
 });
 
 
@@ -283,14 +368,14 @@ box.appendChild(btn);
 
 
 
-// ======================
-// СООБЩЕНИЯ КОМНАТ
-// ======================
+// =================
+// TEXT CHAT
+// =================
+
 
 
 
 function sendMessage(){
-
 
 
 let input =
@@ -301,7 +386,7 @@ document.getElementById(
 
 
 let text =
-input.value.trim();
+input.value;
 
 
 
@@ -310,34 +395,7 @@ return;
 
 
 
-
-
-if(privateUser){
-
-
-
-socket.emit(
-"private-message",
-{
-
-from:username,
-
-to:privateUser,
-
-text:text
-
-}
-
-);
-
-
-
-}
-
-
-
-else if(currentRoom){
-
+if(currentRoom){
 
 
 socket.emit(
@@ -351,7 +409,6 @@ text:text
 }
 
 );
-
 
 
 }
@@ -370,16 +427,12 @@ input.value="";
 
 
 
-
 socket.on(
 "room-message",
 (data)=>{
 
 
-if(
-data.room ==
-currentRoom
-){
+if(data.room==currentRoom){
 
 
 addMessage(
@@ -399,14 +452,11 @@ data.time
 
 
 
-
-
 function addMessage(
 user,
 text,
 time
 ){
-
 
 
 let box =
@@ -436,9 +486,9 @@ div.innerHTML=
 
 ${text}
 
-<small>
-${time}
-</small>
+<br>
+
+<small>${time}</small>
 
 `;
 
@@ -462,33 +512,15 @@ box.scrollHeight;
 
 
 
-function loadRoom(){
-
-
-document.getElementById(
-"messages"
-).innerHTML="";
-
-
-}
-
-
-
-
-
-
-
-
-
-// ======================
-// ПОЛЬЗОВАТЕЛИ / ЛС
-// ======================
+// =================
+// ONLINE
+// =================
 
 
 
 socket.on(
 "users",
-(data)=>{
+(list)=>{
 
 
 let box =
@@ -502,50 +534,325 @@ box.innerHTML="";
 
 
 
-data.forEach(user=>{
+list.forEach(user=>{
 
 
-if(user==username)
-return;
-
-
-
-let btn =
+let p =
 document.createElement(
-"button"
+"p"
 );
 
 
 
-btn.innerHTML =
-"💬 "+user;
+p.innerHTML =
+"🟢 "+user;
+
+
+box.appendChild(p);
 
 
 
-btn.onclick=()=>{
+});
 
 
-privateUser=user;
-
-currentRoom=null;
+});
 
 
-document.getElementById(
-"messages"
-).innerHTML="";
+
+
+
+
+
+
+
+// =================
+// VOICE CHAT
+// =================
+
+
+
+async function joinVoice(){
+
+
+if(!currentVoiceRoom){
+
+alert(
+"Выбери голосовую комнату"
+);
+
+
+return;
+
+}
+
+
+
+try{
+
+
+localStream =
+await navigator.mediaDevices
+.getUserMedia({
+
+audio:true
+
+});
 
 
 
 socket.emit(
-"get-private",
-{
+"join-voice",
+currentVoiceRoom
+);
 
-from:username,
 
-to:user
+
+alert(
+"🎤 Вы вошли в голос"
+);
+
+
 
 }
 
+catch(e){
+
+
+alert(
+"Нет доступа к микрофону"
+);
+
+
+}
+
+
+
+}
+
+
+
+
+
+
+
+
+
+function leaveVoice(){
+
+
+
+if(currentVoiceRoom){
+
+
+socket.emit(
+"leave-voice",
+currentVoiceRoom
+);
+
+
+}
+
+
+
+for(let id in peers){
+
+peers[id].close();
+
+}
+
+
+
+peers={};
+
+
+
+}
+
+
+
+
+
+function muteMic(){
+
+
+
+if(!localStream)
+return;
+
+
+
+muted=!muted;
+
+
+
+localStream
+.getAudioTracks()
+.forEach(
+track=>{
+
+track.enabled =
+!muted;
+
+});
+
+
+}
+
+
+
+
+
+
+
+
+
+// новый пользователь
+
+
+
+socket.on(
+"voice-user",
+async(id)=>{
+
+
+let peer =
+createPeer(id);
+
+
+
+let offer =
+await peer.createOffer();
+
+
+
+await peer.setLocalDescription(
+offer
+);
+
+
+
+socket.emit(
+"offer",
+{
+
+target:id,
+
+offer:offer
+
+}
+
+);
+
+
+
+});
+
+
+
+
+
+
+
+
+
+function createPeer(id){
+
+
+
+let peer =
+new RTCPeerConnection({
+
+iceServers:[
+
+{
+urls:
+"stun:stun.l.google.com:19302"
+}
+
+]
+
+});
+
+
+
+peers[id]=peer;
+
+
+
+
+if(localStream){
+
+
+localStream
+.getTracks()
+.forEach(
+track=>{
+
+
+peer.addTrack(
+track,
+localStream
+);
+
+
+});
+
+
+}
+
+
+
+
+
+peer.onicecandidate =
+(e)=>{
+
+
+if(e.candidate){
+
+
+socket.emit(
+"ice",
+{
+
+target:id,
+
+candidate:e.candidate
+
+}
+
+);
+
+
+}
+
+
+};
+
+
+
+
+
+
+peer.ontrack =
+(e)=>{
+
+
+let audio =
+document.createElement(
+"audio"
+);
+
+
+audio.autoplay=true;
+
+
+audio.srcObject =
+e.streams[0];
+
+
+document.body.appendChild(
+audio
 );
 
 
@@ -554,15 +861,11 @@ to:user
 
 
 
-box.appendChild(btn);
+
+return peer;
 
 
-
-});
-
-
-});
-
+}
 
 
 
@@ -570,28 +873,47 @@ box.appendChild(btn);
 
 
 
-
-// история ЛС
 
 
 socket.on(
-"private-history",
-(data)=>{
+"offer",
+async(data)=>{
 
 
-document.getElementById(
-"messages"
-).innerHTML="";
+let peer =
+createPeer(
+data.from
+);
 
 
 
-data.forEach(msg=>{
+await peer.setRemoteDescription(
+data.offer
+);
 
 
-addMessage(
-msg.sender,
-msg.text,
-msg.time
+
+let answer =
+await peer.createAnswer();
+
+
+
+await peer.setLocalDescription(
+answer
+);
+
+
+
+socket.emit(
+"answer",
+{
+
+target:data.from,
+
+answer:answer
+
+}
+
 );
 
 
@@ -599,46 +921,100 @@ msg.time
 });
 
 
-});
 
 
 
 
 
-
-
-
-
-// новые ЛС
 
 
 socket.on(
-"private-message",
-(data)=>{
+"answer",
+async(data)=>{
 
 
-if(
-
-(data.from==username &&
-data.to==privateUser)
-
-||
-
-(data.to==username &&
-data.from==privateUser)
-
-){
+if(peers[data.from]){
 
 
-addMessage(
-data.from,
-data.text,
-data.time
+await peers[data.from]
+.setRemoteDescription(
+data.answer
 );
 
 
 }
 
+
+});
+
+
+
+
+
+
+
+
+socket.on(
+"ice",
+async(data)=>{
+
+
+if(peers[data.from]){
+
+
+await peers[data.from]
+.addIceCandidate(
+data.candidate
+);
+
+
+}
+
+
+});
+
+
+
+
+
+
+
+
+socket.on(
+"voice-list",
+(list)=>{
+
+
+let box =
+document.getElementById(
+"voiceUsers"
+);
+
+
+box.innerHTML="";
+
+
+
+list.forEach(id=>{
+
+
+let p =
+document.createElement(
+"p"
+);
+
+
+
+p.innerHTML =
+"🎤 "+id;
+
+
+
+box.appendChild(p);
+
+
+
+});
 
 
 });
