@@ -7,8 +7,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-
-<title>Messenger v4</title>
+<title>Messenger Voice</title>
 
 
 <link rel="stylesheet" href="style.css">
@@ -18,7 +17,6 @@
 
 
 </head>
-
 
 
 <body>
@@ -33,7 +31,7 @@
 <div class="servers">
 
 
-<h3>🏠 Серверы</h3>
+<h3>🏠</h3>
 
 
 <button onclick="createServer()">
@@ -52,7 +50,6 @@
 
 
 
-
 <!-- КОМНАТЫ -->
 
 <div class="rooms">
@@ -61,21 +58,26 @@
 <h3>Комнаты</h3>
 
 
-<button onclick="createRoom()">
-➕
+<button onclick="createTextRoom()">
+💬
 </button>
+
+
+<button onclick="createVoiceRoom()">
+🔊
+</button>
+
 
 
 <div id="rooms"></div>
 
 
 
-
 <hr>
 
 
-<h3>ЛС</h3>
 
+<h3>Онлайн</h3>
 
 <div id="users"></div>
 
@@ -116,12 +118,13 @@ class="messages">
 
 
 
+
 <div class="send">
 
 
-<input
+<input 
 id="message"
-placeholder="Написать сообщение..."
+placeholder="Сообщение..."
 >
 
 
@@ -140,7 +143,77 @@ placeholder="Написать сообщение..."
 
 
 
+
+
+
+
+
+
+<!-- ГОЛОС -->
+
+<div class="voice">
+
+
+<h3>
+🔊 Голос
+</h3>
+
+
+
+<div id="voiceRoom">
+
+Нет комнаты
+
 </div>
+
+
+
+<button onclick="joinVoice()">
+
+🎤 Войти
+
+</button>
+
+
+
+
+<button onclick="leaveVoice()">
+
+❌ Выйти
+
+</button>
+
+
+
+
+<button onclick="muteMic()">
+
+🔇 Микрофон
+
+</button>
+
+
+
+<h4>
+Игроки:
+</h4>
+
+
+<div id="voiceUsers">
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+
+</div>
+
 
 
 
