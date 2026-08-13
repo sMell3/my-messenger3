@@ -7,6 +7,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+
 <title>Messenger Voice</title>
 
 
@@ -19,12 +20,10 @@
 </head>
 
 
-
 <body>
 
 
 <div class="app">
-
 
 
 <div class="header">
@@ -47,7 +46,8 @@
 
 <input 
 id="nickname"
-placeholder="Ваш ник">
+placeholder="Введите ник"
+>
 
 
 <button onclick="join()">
@@ -65,9 +65,8 @@ placeholder="Ваш ник">
 
 
 
+
 <div id="chat" style="display:none;">
-
-
 
 
 
@@ -80,9 +79,8 @@ placeholder="Ваш ник">
 <div class="chat-box">
 
 
+<div id="messages" class="messages">
 
-<div id="messages"
-class="messages">
 
 </div>
 
@@ -92,9 +90,10 @@ class="messages">
 <div class="send">
 
 
-<input 
+<input
 id="message"
-placeholder="Написать сообщение">
+placeholder="Сообщение..."
+>
 
 
 <button onclick="sendMessage()">
@@ -116,12 +115,13 @@ placeholder="Написать сообщение">
 
 
 
+
+
 <div class="side">
 
 
-
 <h3>
-Онлайн
+👥 Онлайн
 </h3>
 
 
@@ -131,18 +131,20 @@ placeholder="Написать сообщение">
 
 
 
+
 <hr>
 
 
 <h3>
-Голос
+🎤 Голос
+
 </h3>
 
 
 
 <button onclick="startVoice()">
 
-🎤 Включить микрофон
+🎙 Включить микрофон
 
 </button>
 
@@ -150,7 +152,7 @@ placeholder="Написать сообщение">
 
 <button onclick="muteVoice()">
 
-🔇 Выключить
+🔇 Выключить микрофон
 
 </button>
 
@@ -162,14 +164,9 @@ placeholder="Написать сообщение">
 
 
 
-
 </div>
 
 
-
-
-
-</div>
 
 
 
@@ -177,8 +174,12 @@ placeholder="Написать сообщение">
 </div>
 
 
+</div>
+
+
 
 </div>
+
 
 
 
@@ -188,5 +189,6 @@ placeholder="Написать сообщение">
 
 
 </body>
+
 
 </html>
