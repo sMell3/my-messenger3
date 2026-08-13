@@ -10,12 +10,22 @@ const app = express();
 app.use(cors());
 
 
-// папка сайта
-app.use(
-    express.static(
-        path.join(__dirname, "../public")
-    )
-);
+// папка с сайтом
+const publicPath = path.join(__dirname, "public");
+
+app.use(express.static(publicPath));
+
+
+
+// главная страница
+
+app.get("/", (req, res) => {
+
+    res.sendFile(
+        path.join(publicPath, "index.html")
+    );
+
+});
 
 
 
@@ -26,8 +36,7 @@ const server = http.createServer(app);
 const io = new Server(server, {
 
     cors: {
-        origin: "*",
-        methods: ["GET", "POST"]
+        origin: "*"
     }
 
 });
@@ -42,135 +51,107 @@ let users = {};
 
 // подключение
 
-io.on("connection", (socket) => {
+io.on("connection", (socket)=>{
 
 
     console.log(
-        "Подключился:",
+        "Новое подключение:",
         socket.id
     );
 
 
 
-    // вход
-
-    socket.on(
-        "join",
-        (nickname)=>{
+    socket.on("join",(nickname)=>{
 
 
-            users[socket.id] = nickname;
+        users[socket.id] = nickname;
 
 
 
-            io.emit(
-                "onlineUsers",
-                Object.values(users)
-            );
+        io.emit(
+            "onlineUsers",
+            Object.values(users)
+        );
 
 
+
+        io.emit(
+            "message",
+            {
+                user:"SERVER",
+                text:`${nickname} вошёл в чат`,
+                time:new Date().toLocaleTimeString()
+            }
+        );
+
+
+    });
+
+
+
+
+    socket.on("sendMessage",(text)=>{
+
+
+        const nickname =
+        users[socket.id] || "Unknown";
+
+
+
+        io.emit(
+            "message",
+            {
+
+                user:nickname,
+
+                text:text,
+
+                time:new Date().toLocaleTimeString()
+
+            }
+        );
+
+
+    });
+
+
+
+
+
+    socket.on("disconnect",()=>{
+
+
+        const nickname =
+        users[socket.id];
+
+
+        delete users[socket.id];
+
+
+
+        io.emit(
+            "onlineUsers",
+            Object.values(users)
+        );
+
+
+
+        if(nickname){
 
             io.emit(
                 "message",
                 {
                     user:"SERVER",
-                    text:`${nickname} вошёл в чат`,
+                    text:`${nickname} вышел`,
                     time:new Date().toLocaleTimeString()
                 }
             );
 
-
         }
-    );
 
 
+    });
 
-
-    // сообщение
-
-    socket.on(
-        "sendMessage",
-        (text)=>{
-
-
-            let nickname =
-            users[socket.id] || "Unknown";
-
-
-
-            io.emit(
-                "message",
-                {
-
-                    user:nickname,
-
-                    text:text,
-
-                    time:new Date().toLocaleTimeString()
-
-                }
-            );
-
-
-        }
-    );
-
-
-
-
-
-    // отключение
-
-    socket.on(
-        "disconnect",
-        ()=>{
-
-
-            let nickname =
-            users[socket.id];
-
-
-
-            delete users[socket.id];
-
-
-
-            io.emit(
-                "onlineUsers",
-                Object.values(users)
-            );
-
-
-
-            if(nickname){
-
-
-                io.emit(
-                    "message",
-                    {
-
-                        user:"SERVER",
-
-                        text:`${nickname} вышел из чата`,
-
-                        time:new Date().toLocaleTimeString()
-
-                    }
-                );
-
-
-            }
-
-
-
-            console.log(
-                "Отключился:",
-                socket.id
-            );
-
-
-        }
-    );
 
 
 });
@@ -179,35 +160,19 @@ io.on("connection", (socket) => {
 
 
 
-// keep alive
-
-setInterval(()=>{
-
-    console.log(
-        "Server active"
-    );
-
-},60000);
-
-
-
-
-
-
-// Render сам выдаёт PORT
+// Render использует свой порт
 
 const PORT =
 process.env.PORT || 3000;
 
 
 
-server.listen(
-    PORT,
-    ()=>{
+server.listen(PORT,()=>{
 
-        console.log(
-            `Сервер запущен на порту ${PORT}`
-        );
 
-    }
-);
+    console.log(
+        `Server started on ${PORT}`
+    );
+
+
+});
