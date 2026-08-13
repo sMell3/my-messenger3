@@ -1,16 +1,16 @@
-* {
-    box-sizing: border-box;
+*{
+    box-sizing:border-box;
 }
 
 
 
-body {
+body{
 
     margin:0;
 
     height:100vh;
 
-    background:#111827;
+    background:#0f172a;
 
     color:white;
 
@@ -28,19 +28,19 @@ body {
 
 
 
-.app {
+.app{
 
     width:1000px;
 
     height:650px;
 
-    background:#1f2937;
+    background:#1e293b;
 
     border-radius:20px;
 
     overflow:hidden;
 
-    box-shadow:0 0 40px black;
+    box-shadow:0 0 40px #000;
 
 }
 
@@ -48,7 +48,8 @@ body {
 
 
 
-.header {
+
+.header{
 
     height:70px;
 
@@ -56,9 +57,9 @@ body {
 
     display:flex;
 
-    align-items:center;
-
     justify-content:center;
+
+    align-items:center;
 
     font-size:28px;
 
@@ -71,7 +72,7 @@ body {
 
 
 
-#login {
+#login{
 
     height:580px;
 
@@ -83,7 +84,7 @@ body {
 
     align-items:center;
 
-    gap:15px;
+    gap:20px;
 
 }
 
@@ -91,13 +92,15 @@ body {
 
 
 
-input {
+
+
+input{
 
     background:#111827;
 
     color:white;
 
-    border:none;
+    border:0;
 
     outline:none;
 
@@ -111,9 +114,7 @@ input {
 
 
 
-
-
-#login input {
+#login input{
 
     width:300px;
 
@@ -123,13 +124,15 @@ input {
 
 
 
-button {
+
+
+button{
 
     background:#5865f2;
 
     color:white;
 
-    border:none;
+    border:0;
 
     padding:12px 20px;
 
@@ -143,9 +146,7 @@ button {
 
 
 
-
-
-button:hover {
+button:hover{
 
     background:#4752c4;
 
@@ -157,7 +158,8 @@ button:hover {
 
 
 
-.content {
+
+.content{
 
     display:flex;
 
@@ -169,7 +171,9 @@ button:hover {
 
 
 
-.chat-box {
+
+
+.chat-box{
 
     flex:1;
 
@@ -185,13 +189,13 @@ button:hover {
 
 
 
-.messages {
+.messages{
 
     flex:1;
 
-    overflow-y:auto;
-
     padding:20px;
+
+    overflow-y:auto;
 
     background:#111827;
 
@@ -202,10 +206,9 @@ button:hover {
 
 
 
+.message{
 
-.message {
-
-    background:#374151;
+    background:#334155;
 
     padding:12px;
 
@@ -217,7 +220,7 @@ button:hover {
 
 
 
-.message b {
+.message b{
 
     color:#60a5fa;
 
@@ -225,9 +228,7 @@ button:hover {
 
 
 
-
-
-.message small {
+.message small{
 
     display:block;
 
@@ -243,23 +244,24 @@ button:hover {
 
 
 
-.send {
+.send{
+
+    height:70px;
 
     display:flex;
 
-    padding:10px;
-
     gap:10px;
 
-    background:#1f2937;
+    padding:10px;
+
+    background:#1e293b;
 
 }
 
 
 
 
-
-.send input {
+.send input{
 
     flex:1;
 
@@ -269,22 +271,11 @@ button:hover {
 
 
 
-.send button {
-
-    width:60px;
-
-}
 
 
+.side{
 
-
-
-
-
-
-.side {
-
-    width:260px;
+    width:280px;
 
     background:#172033;
 
@@ -296,7 +287,8 @@ button:hover {
 
 
 
-.side h3 {
+
+.side h3{
 
     margin-top:0;
 
@@ -307,9 +299,9 @@ button:hover {
 
 
 
-#online {
+#online p{
 
-    line-height:25px;
+    margin:8px 0;
 
 }
 
@@ -318,10 +310,21 @@ button:hover {
 
 
 
-#voiceUsers {
 
-    margin-top:15px;
+#voiceUsers{
 
-    color:#9ca3af;
+    margin-top:20px;
+
+}
+
+
+
+
+
+audio{
+
+    width:200px;
+
+    margin-top:10px;
 
 }
